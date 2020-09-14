@@ -221,6 +221,8 @@
         var showNavigator = attributes.showNavigator;
         var showGoInput = attributes.showGoInput;
         var showGoButton = attributes.showGoButton;
+        var showPageSizeSelector = attributes.showPageSizeSelector;
+        var pageSizeSelectorValues = attributes.pageSizeSelectorValues;
 
         var pageLink = attributes.pageLink;
         var prevText = attributes.prevText;
@@ -304,6 +306,21 @@
             });
             html += '<div class="' + classPrefix + '-nav J-paginationjs-nav">' + formattedString + '<\/div>';
           }
+        }
+
+        if (showPageSizeSelector && Helpers.isArray(pageSizeSelectorValues)) {
+          if (pageSizeSelectorValues.indexOf(attributes.pageSize) === -1) {
+            throwError('"pageSize" must be one of [' + pageSizeSelectorValues.join(', ') + ']');
+          }
+          var pageSizeSelector = '<select class="J-paginationjs-page-size-selector">';
+          for (var i = 0; i < pageSizeSelectorValues.length; i++) {
+            var curPageSize = pageSizeSelectorValues[i];
+            var selected = curPageSize === attributes.pageSize;
+            pageSizeSelector += '<option value="' + curPageSize + '"' + (selected ? ' selected' : '') + '>' + curPageSize + '</option>';
+          }
+          pageSizeSelector += '</select>';
+
+          html += '<div class="' + classPrefix + '-page-size-selector">' + pageSizeSelector + '</div>';
         }
 
         // Whether to display the Go input
@@ -742,6 +759,21 @@
         });
 
         // Go button click
+        el.delegate('.J-paginationjs-page-size-selector', 'change', function(event) {
+          var current = $(event.currentTarget);
+          var pageSize = parseInt(current.val());
+
+          attributes.pageSize = pageSize;
+          self.model.pageSize = pageSize;
+
+          self.render(false);
+          self.refresh();
+
+          // After Go button clicked
+          self.callHook('afterPageSizeSelectorChange', event, pageSize);
+        });
+
+        // Go button click
         el.delegate('.J-paginationjs-go-button', 'click', function(event) {
           var pageNumber = $('.J-paginationjs-go-pagenumber', el).val();
 
@@ -920,6 +952,12 @@
     showPageNumbers: true,
 
     showNavigator: false,
+
+    // Whether to display the 'PageSize' switcher
+    showPageSizeSelector: false,
+
+    // Page size selector allowed values
+    pageSizeSelectorValues: [10, 20, 50, 100],
 
     // Whether to display the 'Go' input
     showGoInput: false,
